@@ -1,40 +1,33 @@
-package com.example.ttlts.service;
+package com.example.ttlts.service.Service;
 
 import com.example.ttlts.dto.request.AuthenticationRequest;
 import com.example.ttlts.dto.response.AuthenticationResponse;
-import com.example.ttlts.entity.Permissions;
-import com.example.ttlts.entity.Role;
 import com.example.ttlts.entity.User;
 import com.example.ttlts.exception.AppException;
 import com.example.ttlts.exception.ErrException;
-import com.example.ttlts.repository.PermissionsRepository;
-import com.example.ttlts.repository.RoleRepository;
 import com.example.ttlts.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Optional;
-import java.util.StringJoiner;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
+
+    protected static final String KEY_SIGN = "lQgnbki8rjdh62RZ2FNXZB9KWYB1IjajiY04z011BXjjagnc7a";
 
     final JwtDecoder jwtDecoder;
 
@@ -44,14 +37,12 @@ public class AuthService {
 
     public String decodeToken(String token) {
         try {
-            Jwt jwt = jwtDecoder.decode(token); // Giải mã token
-            return jwt.getSubject(); // Trả về username từ token
+            Jwt jwt = jwtDecoder.decode(token);
+            return jwt.getSubject();
         } catch (JwtException e) {
             throw new RuntimeException("Invalid token");
         }
     }
-
-    protected static final String KEY_SIGN = "lQgnbki8rjdh62RZ2FNXZB9KWYB1IjajiY04z011BXjjagnc7a";
 
     String createToken(User user){
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS256); // xac dinh header cua token

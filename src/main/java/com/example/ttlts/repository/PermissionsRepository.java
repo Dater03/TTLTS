@@ -9,7 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface PermissionsRepository extends JpaRepository<Permissions, Integer> {
-    List<Permissions> findByUserId(int userId);
 
-    Optional<Object> findByUserIdAndRoleId(int userId, int roleId);
 }

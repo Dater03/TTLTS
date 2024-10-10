@@ -1,4 +1,4 @@
-package com.example.ttlts.service;
+package com.example.ttlts.service.Service;
 
 import com.example.ttlts.entity.User;
 import com.example.ttlts.repository.UserRepository;
@@ -29,7 +29,7 @@ public class UserService {
 
         // Gửi email xác nhận
         if (savedUser.getEmail() != null && !savedUser.getEmail().isEmpty()) {
-            String subject = "Welcome to our service";
+            String subject = "Chao mung den voi dich vu cua chung toi!";
             String text = "Dear " + savedUser.getFullName() + ", your account has been created successfully.";
             emailService.sendEmail(savedUser.getEmail(), subject, text);
         }
@@ -60,6 +60,7 @@ public class UserService {
     }
 
     // Xác nhận tạo mật khẩu mới qua token
+    // chua chay
     public void confirmPassword(String token, String newPassword) {
         try {
             User user = validateToken(token);

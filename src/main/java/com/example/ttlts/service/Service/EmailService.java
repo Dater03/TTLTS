@@ -1,4 +1,4 @@
-package com.example.ttlts.service;
+package com.example.ttlts.service.Service;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class EmailService {
     JavaMailSender mailSender;
     public void sendResetToken(String email, String token) {
-        System.out.println("Sending reset token to email: " + email);
+        System.out.println("Gui token reset toi email: " + email);
         System.out.println("Reset token: " + token);
     }
 

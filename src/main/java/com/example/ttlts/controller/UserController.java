@@ -1,11 +1,7 @@
 package com.example.ttlts.controller;
 
-import com.example.ttlts.dto.request.UserRequest;
-import com.example.ttlts.dto.response.ApiResponse;
-import com.example.ttlts.dto.response.UserResponse;
 import com.example.ttlts.entity.User;
-import com.example.ttlts.service.UserService;
-import jakarta.validation.Valid;
+import com.example.ttlts.service.Service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -13,11 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 @CrossOrigin("*")
@@ -56,8 +50,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
-
-
 
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
