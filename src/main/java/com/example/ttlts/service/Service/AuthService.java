@@ -29,11 +29,7 @@ public class AuthService {
 
     protected static final String KEY_SIGN = "lQgnbki8rjdh62RZ2FNXZB9KWYB1IjajiY04z011BXjjagnc7a";
 
-    final JwtDecoder jwtDecoder;
-
-    public AuthService(JwtDecoder jwtDecoder) {
-        this.jwtDecoder = jwtDecoder;
-    }
+    JwtDecoder jwtDecoder;
 
     public String decodeToken(String token) {
         try {

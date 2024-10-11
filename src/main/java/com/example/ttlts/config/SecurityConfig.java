@@ -20,10 +20,10 @@ import javax.crypto.spec.SecretKeySpec;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private static final String KEY_SIGN = "lQgnbki8rjdh62RZ2FNXZB9KWYB1IjajiY04z011BXjjagnc7a";
-    private final long validityInMilliseconds = 3600000; // 1h
 
     @Bean
     public PasswordEncoder passwordEncoder() {
