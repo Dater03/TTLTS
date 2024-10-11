@@ -20,8 +20,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/auth")
 public class UserController {
-
-    @Autowired
     private UserService userService;
 
     @PostMapping(value = "/register" , consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -30,8 +28,8 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        String token = userService.login(credentials.get("username"), credentials.get("password"));
+    public ResponseEntity<?> login(@RequestBody Map<String, String> user) {
+        String token = userService.login(user.get("username"), user.get("password"));
         return ResponseEntity.ok(Collections.singletonMap("token", token));
     }
 
@@ -43,12 +41,8 @@ public class UserController {
 
     @PostMapping("/confirm-password")
     public ResponseEntity<?> confirmPassword(@RequestBody Map<String, String> request) {
-        try {
-            userService.confirmPassword(request.get("token"), request.get("newPassword"));
-            return ResponseEntity.ok("Password changed successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        }
+        userService.confirmPassword(request.get("token"), request.get("newPassword"));
+        return ResponseEntity.ok("Password changed successfully");
     }
 
     @PostMapping("/change-password")

@@ -2,9 +2,11 @@ package com.example.ttlts.service.Service;
 
 import com.example.ttlts.dto.request.AuthenticationRequest;
 import com.example.ttlts.dto.response.AuthenticationResponse;
+import com.example.ttlts.entity.RefreshToken;
 import com.example.ttlts.entity.User;
 import com.example.ttlts.exception.AppException;
 import com.example.ttlts.exception.ErrException;
+import com.example.ttlts.repository.RefeshTokenRepository;
 import com.example.ttlts.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -18,6 +20,7 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
@@ -26,19 +29,30 @@ import java.util.Date;
 public class AuthService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
+    RefeshTokenRepository refeshTokenRepository;;
 
     protected static final String KEY_SIGN = "lQgnbki8rjdh62RZ2FNXZB9KWYB1IjajiY04z011BXjjagnc7a";
 
-    JwtDecoder jwtDecoder;
+    final JwtDecoder jwtDecoder;
+
+    public AuthService(JwtDecoder jwtDecoder) {
+        this.jwtDecoder = jwtDecoder;
+    }
 
     public String decodeToken(String token) {
+        RefreshToken refreshToken = refeshTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token not found"));
+        if (refreshToken.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token expired");
+        }
         try {
             Jwt jwt = jwtDecoder.decode(token);
             return jwt.getSubject();
         } catch (JwtException e) {
-            throw new RuntimeException("Invalid token");
+            throw new RuntimeException("Invalid token", e);
         }
     }
+
 
     String createToken(User user){
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS256); // xac dinh header cua token
@@ -62,18 +76,17 @@ public class AuthService {
         }
     }
 
-    public AuthenticationResponse authenticationResponse(AuthenticationRequest authenticationRequest){
-        var user = userRepository.findByUsername(authenticationRequest.getUsername())
-                .orElseThrow(() -> new AppException((ErrException.USER_NOT_EXISTED)));
-        boolean checked = passwordEncoder.matches(authenticationRequest.getPassword(), user.getPassword());
-        if(!checked){
-            throw new AppException(ErrException.USER_NOT_EXISTED);
+
+    public AuthenticationResponse authenticate(AuthenticationRequest authRequest) {
+        User user = userRepository.findByUsername(authRequest.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(authRequest.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
         }
-        var token = createToken(user);
-        return AuthenticationResponse.builder()
-                .token(token)
-                .check(true)
-                .build();
+
+        String token = createToken(user);
+        return new AuthenticationResponse(token, true);
     }
 }
 

@@ -1,6 +1,8 @@
 package com.example.ttlts.service.Service;
 
+import com.example.ttlts.entity.RefreshToken;
 import com.example.ttlts.entity.User;
+import com.example.ttlts.repository.RefeshTokenRepository;
 import com.example.ttlts.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,9 @@ public class UserService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
     EmailService emailService;
-    private final AuthService authService;
+    RefeshTokenRepository refeshTokenRepository;
+    AuthService authService;
+    RefreshTokenService refreshTokenService;
 
     // Đăng ký người dùng mới
     public User register(User user) {
@@ -49,8 +53,12 @@ public class UserService {
             throw new BadCredentialsException("Invalid password");
         }
 
-        return authService.createToken(user);
+        String token = authService.createToken(user);
+        refreshTokenService.saveToken(user, token); // Lưu token vào bảng RefreshToken
+
+        return token;
     }
+
 
     // Quên mật khẩu - Gửi mã xác nhận qua email
     public void forgotPassword(String email) {
@@ -66,16 +74,11 @@ public class UserService {
     // Xác nhận tạo mật khẩu mới qua token
     // chua chay
     public void confirmPassword(String token, String newPassword) {
-        try {
-            User user = validateToken(token);
-
-            user.setPassword(passwordEncoder.encode(newPassword));
-            userRepository.save(user);
-        } catch (UsernameNotFoundException e) {
-            throw new RuntimeException("Invalid token: User not found for the provided token", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid token", e);
-        }
+        User user = validateToken(token);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+            // Xóa token sau khi sử dụng để reset mật khẩu
+        refeshTokenRepository.deleteByToken(token);
     }
 
     // Đổi mật khẩu
@@ -101,6 +104,10 @@ public class UserService {
 
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found for the provided token"));
+    }
+
+    public void logout(String token) {
+        refeshTokenRepository.deleteByToken(token);
     }
 
 }
