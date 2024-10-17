@@ -28,7 +28,7 @@ public class Team {
     LocalDateTime updateTime;
     int managerId;
 
-    @OneToMany(mappedBy = "team",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "team")
             @JsonIgnore
     List<User> user;
 }

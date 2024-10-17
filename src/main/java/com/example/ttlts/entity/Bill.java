@@ -38,3 +38,6 @@ public class Bill {
     @JsonBackReference
     User user;
 }
+
+enum BillStatus {
+}

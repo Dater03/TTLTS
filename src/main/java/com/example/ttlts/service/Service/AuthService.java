@@ -3,6 +3,7 @@ package com.example.ttlts.service.Service;
 import com.example.ttlts.dto.request.AuthenticationRequest;
 import com.example.ttlts.dto.response.AuthenticationResponse;
 import com.example.ttlts.entity.RefreshToken;
+import com.example.ttlts.entity.Role;
 import com.example.ttlts.entity.User;
 import com.example.ttlts.exception.AppException;
 import com.example.ttlts.exception.ErrException;
@@ -12,49 +13,33 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.StringJoiner;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@RequiredArgsConstructor
 public class AuthService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
     RefeshTokenRepository refeshTokenRepository;;
+    JwtDecoder jwtDecoder;
 
     protected static final String KEY_SIGN = "lQgnbki8rjdh62RZ2FNXZB9KWYB1IjajiY04z011BXjjagnc7a";
 
-    final JwtDecoder jwtDecoder;
-
-    public AuthService(JwtDecoder jwtDecoder) {
-        this.jwtDecoder = jwtDecoder;
-    }
-
-    public String decodeToken(String token) {
-        RefreshToken refreshToken = refeshTokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Token not found"));
-        if (refreshToken.getExpiryTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token expired");
-        }
-        try {
-            Jwt jwt = jwtDecoder.decode(token);
-            return jwt.getSubject();
-        } catch (JwtException e) {
-            throw new RuntimeException("Invalid token", e);
-        }
-    }
-
-
-    String createToken(User user){
+    public String createToken(User user){
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS256); // xac dinh header cua token
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder() // noidung gui di cua token
                 .subject(user.getUsername())
@@ -63,7 +48,7 @@ public class AuthService {
                 .expirationTime(new Date(
                         Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli() // thoi han dung
                 ))
-                .claim("scope","Admin") // get role
+                .claim("scope",buildScopeToRoles(user)) // get role
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject()); // xac dinh thong tin cua token
         JWSObject jwsObject = new JWSObject(header, payload); // xac dinh token
@@ -76,17 +61,36 @@ public class AuthService {
         }
     }
 
+    public AuthenticationResponse authenticationResponse(AuthenticationRequest authenticationRequest){
+        var user = userRepository.findByUsername(authenticationRequest.getUsername())
+                .orElseThrow(() -> new AppException((ErrException.USER_NOT_EXISTED)));
+        boolean checked = passwordEncoder.matches(authenticationRequest.getPassword(), user.getPassword());
+        if(!checked){
+            throw new AppException(ErrException.USER_NOT_EXISTED);
+        }
+        var token = createToken(user);
+        return AuthenticationResponse.builder()
+                .token(token)
+                .check(true)
+                .build();
+    }
 
-    public AuthenticationResponse authenticate(AuthenticationRequest authRequest) {
-        User user = userRepository.findByUsername(authRequest.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public String buildScopeToRoles(User user) {
+        StringJoiner stringJoiner = new StringJoiner(" "); // tạo một chuỗi với các role cách nhau bằng khoảng trắng
 
-        if (!passwordEncoder.matches(authRequest.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+        if (!CollectionUtils.isEmpty(user.getPermissions())) {
+            user.getPermissions().forEach(permission -> {
+                Role role = permission.getRole(); // lấy role từ permission
+                if (role != null) {
+                    stringJoiner.add(role.getRoleName()); // thêm tên vai trò vào chuỗi
+                }
+            });
         }
 
-        String token = createToken(user);
-        return new AuthenticationResponse(token, true);
+        return stringJoiner.toString(); // ví dụ: nếu có các vai trò "ADMIN", "USER", thì trả về chuỗi: "ADMIN USER"
     }
+
+
+
 }
 

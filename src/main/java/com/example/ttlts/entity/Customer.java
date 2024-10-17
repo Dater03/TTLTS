@@ -32,9 +32,9 @@ public class Customer {
     @JsonManagedReference
     List<Bill> bill;
 
-    @OneToMany(mappedBy = "customer")
-    @JsonManagedReference
-    List<Project> project;
+//    @OneToMany(mappedBy = "customer")
+//    @JsonManagedReference
+//    List<Project> project;
 
     @OneToMany(mappedBy = "customer")
     @JsonManagedReference

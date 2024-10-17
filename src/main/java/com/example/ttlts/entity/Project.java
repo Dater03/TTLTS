@@ -1,6 +1,7 @@
 package com.example.ttlts.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,28 +28,40 @@ public class Project {
     int employeeId;
     LocalDateTime expectedEndDate;
     int customerId;
+
+    @Column(name = "projectStatus", nullable = false)
+    @Enumerated(EnumType.STRING)
     ProjectStatus projectStatus;
 
     @OneToMany(mappedBy = "project")
     @JsonManagedReference
+    @JsonIgnore
     List<CustomerFeedback> customerfeebback;
 
     @OneToMany(mappedBy = "project")
     @JsonManagedReference
+    @JsonIgnore
     List<Delivery> delivery;
 
     @OneToMany(mappedBy = "project")
     @JsonManagedReference
+    @JsonIgnore
     List<Design> design;
 
-    @ManyToOne
-    @JoinColumn(name = "customerId",insertable = false, updatable = false,nullable = false)
-    @JsonBackReference
-    Customer customer;
+//    @ManyToOne
+//    @JoinColumn(name = "customerId",insertable = false, updatable = false,nullable = false)
+//    @JsonBackReference
+//    Customer customer;
 
     @ManyToOne
     @JoinColumn(name = "employeeId",insertable = false, updatable = false,nullable = false)
     @JsonBackReference
     User user;
 
+}
+
+enum ProjectStatus {
+    DESIGNING,
+    PRINTING,
+    COMPLETED;
 }

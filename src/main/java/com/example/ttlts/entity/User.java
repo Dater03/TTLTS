@@ -85,10 +85,7 @@ public class User {
     List<ImportCoupon> importcoupon;
 
     @ManyToOne
-    @JoinColumn(name = "teamId",insertable = false,updatable = false)
+    @JoinColumn(name = "teamId",insertable=false, updatable=false, nullable = false)
     @JsonBackReference
     Team team;
-
-
-
 }

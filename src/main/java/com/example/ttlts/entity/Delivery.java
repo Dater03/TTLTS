@@ -42,3 +42,7 @@ public class Delivery {
     @JsonBackReference
     Customer customer;
 }
+
+enum DeliveryStatus {
+
+}

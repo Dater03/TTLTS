@@ -20,112 +20,82 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-
 @Configuration
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AutoCreateConfig {
 
     PasswordEncoder passwordEncoder;
 
     List<String> roles = Arrays.asList("Leader", "Designer", "Deliver", "Manager", "Employee", "Admin");
-    List<String> userName = Arrays.asList("Leader", "Designer", "Deliver", "Manager", "Employee", "Admin");
     List<String> teams = Arrays.asList("Team Leader", "Team Designer", "Team Deliver", "Team Manager", "Team Employee", "Team Admin");
 
     @Bean
-    ApplicationRunner applicationRunner(UserRepository userRepository, PermissionsRepository permissionsRepository, TeamRepository teamRepository,RoleRepository roleRepository) {
+    ApplicationRunner applicationRunner(UserRepository userRepository, PermissionsRepository permissionsRepository, TeamRepository teamRepository, RoleRepository roleRepository) {
         return args -> {
-            for (String roleName : roles) {
-                if (roleRepository.findByRoleName(roleName).isEmpty()) {
-                    Role role = Role.builder()
-                            .roleCode(roleName)
-                            .roleName(roleName)
-                            .build();
-                    roleRepository.save(role);
-                    System.out.println("Inserted role: " + roleName);
-                }
-            }
-            for (String teamName : teams) {
-                if (teamRepository.findByName(teamName).isEmpty()) {
-                    Team team = Team.builder()
-                            .createTime(LocalDateTime.now())
-                            .description(teamName)
-                            .managerId(1)
-                            .name(teamName)
-                            .numberOfMember(1)
-                            .updateTime(LocalDateTime.now())
-                            .build();
-                    teamRepository.save(team);
-                    System.out.println("Inserted: " + teamName);
-                }
-            }
-            for (int i = 0; i < userName.size(); i++) {
-                String currentUserName = userName.get(i);
-                String currentRoleName = roles.get(i);
-                String currentTeamName = teams.get(i);
+            createRoles(roleRepository);
+            Team adminTeam = createTeam(teamRepository, "Team Admin");
 
-                Role role = roleRepository.findByRoleName(currentRoleName)
-                        .orElseGet(() -> roleRepository.save(
-                                Role.builder().roleCode(currentRoleName).roleName(currentRoleName).build()
-                        ));
-
-                Team team = teamRepository.findByName(currentTeamName)
-                        .orElseGet(() -> teamRepository.save(
-                                Team.builder()
-                                        .createTime(LocalDateTime.now())
-                                        .description(currentTeamName)
-                                        .managerId(1)
-                                        .name(currentTeamName)
-                                        .numberOfMember(1)
-                                        .updateTime(LocalDateTime.now())
-                                        .build()
-                        ));
-
-                if (userRepository.findByUsername(currentUserName).isEmpty()) {
-                    User user = User.builder()
-                            .username(currentUserName)
-                            .password(passwordEncoder.encode(currentUserName))
-                            .email(currentUserName + "@gmail.com")
-                            .fullName(currentUserName)
-                            .createTime(LocalDateTime.now())
-                            .updateTime(LocalDateTime.now())
-                            .isActive(true)
-                            .teamId(team.getId())
-                            .build();
-                    userRepository.save(user);
-
-                    permissionsRepository.save(Permissions.builder()
-                            .userId(user.getId())
-                            .roleId(role.getId())
-                            .build());
-
-                    System.out.println("Them user: " + currentUserName + " voi role: " + currentRoleName + " va team: " + currentTeamName);
-                }
-            }
-
-//            if (userRepository.findByUsername("Admin").isEmpty()) {
-//                Role adminRole = roleRepository.findByRoleName("Admin")
-//                        .orElseGet(() -> roleRepository.save(
-//                                Role.builder().roleCode("Admin").roleName("Admin").build()
-//                        ));
-//
-//                User admin = User.builder()
-//                        .username("Admin")
-//                        .password(passwordEncoder.encode("admin"))
-//                        .email("admin@gmail.com")
-//                        .fullName("Administrator")
-//                        .createTime(LocalDateTime.now())
-//                        .updateTime(LocalDateTime.now())
-//                        .isActive(true)
-//                        .teamId(6)
-//                        .build();
-//                userRepository.save(admin);
-//
-//                permissionsRepository.save(Permissions.builder()
-//                        .userId(admin.getId())
-//                        .roleId(adminRole.getId())
-//                        .build());
-//            }
+            User adminUser = createUser(userRepository, adminTeam);
+            createPermissions(permissionsRepository, adminUser, roleRepository);
         };
+    }
+
+    private void createRoles(RoleRepository roleRepository) {
+        roles.forEach(roleName -> {
+            roleRepository.findByRoleName(roleName).orElseGet(() -> {
+                Role newRole = Role.builder()
+                        .roleCode("ROLE_" + roleName.toUpperCase())
+                        .roleName(roleName)
+                        .build();
+                roleRepository.save(newRole);
+                System.out.println("Inserted role: " + roleName);
+                return newRole;
+            });
+        });
+    }
+
+    private Team createTeam(TeamRepository teamRepository, String teamName) {
+        return teamRepository.findByName(teamName).orElseGet(() -> {
+            Team team = Team.builder()
+                    .name(teamName)
+                    .description(teamName)
+                    .createTime(LocalDateTime.now())
+                    .updateTime(LocalDateTime.now())
+                    .managerId(1)
+                    .numberOfMember(1)
+                    .build();
+            teamRepository.save(team);
+            return team;
+        });
+    }
+
+    private User createUser(UserRepository userRepository, Team adminTeam) {
+        return userRepository.findByUsername("Admin").orElseGet(() -> {
+            User newAdmin = User.builder()
+                    .username("Admin")
+                    .password(passwordEncoder.encode("admin"))
+                    .fullName("Administrator")
+                    .email("admin@gmail.com")
+                    .createTime(LocalDateTime.now())
+                    .updateTime(LocalDateTime.now())
+                    .teamId(adminTeam.getId())
+                    .isActive(true)
+                    .build();
+            userRepository.save(newAdmin);
+            return newAdmin;
+        });
+    }
+
+    private void createPermissions(PermissionsRepository permissionsRepository, User adminUser, RoleRepository roleRepository) {
+        Role adminRole = roleRepository.findByRoleName("Admin").orElseThrow();
+        permissionsRepository.findByUserIdAndRoleId(adminUser.getId(), adminRole.getId()).orElseGet(() -> {
+            Permissions permissions = Permissions.builder()
+                    .userId(adminUser.getId())
+                    .roleId(adminRole.getId())
+                    .build();
+            permissionsRepository.save(permissions);
+            return permissions;
+        });
     }
 }

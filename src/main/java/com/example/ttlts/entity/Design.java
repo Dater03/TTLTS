@@ -41,3 +41,7 @@ public class Design {
     @JsonBackReference
     User user;
 }
+
+enum DesignStatus {
+
+}

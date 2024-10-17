@@ -31,3 +31,7 @@ public class PrintJobs {
     @JsonBackReference
     Design design;
 }
+
+enum PrintJobStatus {
+
+}

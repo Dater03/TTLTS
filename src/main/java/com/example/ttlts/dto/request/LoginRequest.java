@@ -1,6 +1,5 @@
 package com.example.ttlts.dto.request;
 
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -9,9 +8,7 @@ import lombok.experimental.FieldDefaults;
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserRequest {
+public class LoginRequest {
     String username;
     String password;
-    String fullName;
-    String email;
 }

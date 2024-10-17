@@ -1,6 +1,10 @@
 package com.example.ttlts.controller;
 
+import com.example.ttlts.dto.request.*;
+import com.example.ttlts.dto.response.ApiResponse;
+import com.example.ttlts.dto.response.AuthenticationResponse;
 import com.example.ttlts.entity.User;
+import com.example.ttlts.service.Service.AuthService;
 import com.example.ttlts.service.Service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @CrossOrigin("*")
@@ -20,38 +30,84 @@ import java.util.Map;
 @RestController
 @RequestMapping("/auth")
 public class UserController {
-    private UserService userService;
+    UserService userService;
+    private final AuthService authService;
 
-    @PostMapping(value = "/register" , consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> register(@RequestBody User user) {
-        return ResponseEntity.ok(userService.register(user));
+    @PostMapping("/register")
+    public ResponseEntity<String> registerUser(@RequestBody RegisterRequest registerRequest) {
+        boolean isRegistered = userService.register(registerRequest);
+        if (isRegistered) {
+            return ResponseEntity.ok("User registered successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Registration failed. Username or email already exists.");
+        }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> user) {
-        String token = userService.login(user.get("username"), user.get("password"));
-        return ResponseEntity.ok(Collections.singletonMap("token", token));
+    public ApiResponse<AuthenticationResponse> createToken(@RequestBody AuthenticationRequest authenticationRequest) {
+        return ApiResponse.<AuthenticationResponse>builder()
+                .result(authService.authenticationResponse(authenticationRequest))
+                .code(200)
+                .build();
     }
+
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
-        userService.forgotPassword(request.get("email"));
-        return ResponseEntity.ok("Reset token sent to email");
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        userService.sendVerificationCode(forgotPasswordRequest.getEmail());
+        return ResponseEntity.ok("Verification code sent to your email.");
     }
 
-    @PostMapping("/confirm-password")
-    public ResponseEntity<?> confirmPassword(@RequestBody Map<String, String> request) {
-        userService.confirmPassword(request.get("token"), request.get("newPassword"));
-        return ResponseEntity.ok("Password changed successfully");
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
+        boolean isReset = userService.resetPassword(resetPasswordRequest);
+        if (isReset) {
+            return ResponseEntity.ok("Password has been reset successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid verification code or password.");
+        }
     }
 
-    @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
-        userService.changePassword(
-                request.get("username"),
-                request.get("oldPassword"),
-                request.get("newPassword")
-        );
-        return ResponseEntity.ok("Password updated successfully");
+//    @PostMapping("/change-password")
+//    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
+//        userService.changePassword(
+//                request.get("username"),
+//                request.get("oldPassword"),
+//                request.get("newPassword")
+//        );
+//        return ResponseEntity.ok("Password updated successfully");
+//    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
+        boolean isChanged = userService.changePassword(changePasswordRequest);
+        if (isChanged) {
+            return ResponseEntity.ok("Password changed successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password change failed.");
+        }
     }
+
+    // Chuyển phòng ban cho nhân viên
+    @PutMapping("/change-team/{userId}/{oldTeamId}/{newTeamId}")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<User> changeUserTeam(@PathVariable int userId,@PathVariable int oldTeamId, @PathVariable int newTeamId) {
+        User updatedUser = userService.changeUserTeam(userId,oldTeamId, newTeamId);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<User> getUserById(@PathVariable int id) {
+        User user = userService.getUserById(id);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+
 }

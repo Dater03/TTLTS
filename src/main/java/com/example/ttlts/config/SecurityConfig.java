@@ -33,7 +33,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(request -> request
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll() // Mở cho mọi người
+                        .requestMatchers("/team/**").hasRole("Admin") // Tất cả API team chỉ cho Admin
+                        .requestMatchers("/project/**").hasRole("Employee") // Chỉ cho Employee
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement
@@ -51,14 +53,13 @@ public class SecurityConfig {
                 .build();
     }
 
-//    @Bean
-//    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-//        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-//        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
-//        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-//
-//        JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
-//        authenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-//        return authenticationConverter;
-//    }
+    @Bean
+        // chuyen SCOPE -> ROLE
+    JwtAuthenticationConverter jwtAuthenticationConverter(){
+        JwtGrantedAuthoritiesConverter grantedConverter = new JwtGrantedAuthoritiesConverter();
+        grantedConverter.setAuthorityPrefix("ROLE_");
+        JwtAuthenticationConverter authenConverter = new JwtAuthenticationConverter();
+        authenConverter.setJwtGrantedAuthoritiesConverter(grantedConverter);
+        return authenConverter;
+    }
 }

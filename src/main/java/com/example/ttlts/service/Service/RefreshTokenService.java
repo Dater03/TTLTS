@@ -9,6 +9,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -27,15 +28,15 @@ public class RefreshTokenService {
         refreshTokenRepository.save(refreshToken);
     }
 
-    // Xóa token sau khi đã sử dụng
-    public void deleteByToken(String token) {
-        refreshTokenRepository.deleteByToken(token);
-    }
-
-    // Kiểm tra token có tồn tại và hợp lệ
-    public boolean isValidToken(String token) {
-        return refreshTokenRepository.findByToken(token)
-                .map(refreshToken -> refreshToken.getExpiryTime().isAfter(LocalDateTime.now()))
-                .orElse(false);
+    public RefreshToken generateNewToken(User user) {
+        String token = UUID.randomUUID().toString();
+        return refreshTokenRepository.save(
+                RefreshToken.builder()
+                        .userId(user.getId())
+                        .token(token)
+                        .expiryTime(LocalDateTime.now().plusDays(7))
+                        .user(user)
+                        .build()
+        );
     }
 }
