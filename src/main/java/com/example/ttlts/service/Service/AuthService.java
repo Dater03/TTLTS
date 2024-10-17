@@ -34,8 +34,7 @@ import java.util.StringJoiner;
 public class AuthService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
-    RefeshTokenRepository refeshTokenRepository;;
-    JwtDecoder jwtDecoder;
+    RefreshTokenService refreshTokenService;;
 
     protected static final String KEY_SIGN = "lQgnbki8rjdh62RZ2FNXZB9KWYB1IjajiY04z011BXjjagnc7a";
 
@@ -69,6 +68,7 @@ public class AuthService {
             throw new AppException(ErrException.USER_NOT_EXISTED);
         }
         var token = createToken(user);
+        refreshTokenService.saveToken(user, token);
         return AuthenticationResponse.builder()
                 .token(token)
                 .check(true)

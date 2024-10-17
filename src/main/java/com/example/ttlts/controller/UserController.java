@@ -19,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
@@ -88,14 +89,6 @@ public class UserController {
         }
     }
 
-    // Chuyển phòng ban cho nhân viên
-    @PutMapping("/change-team/{userId}/{oldTeamId}/{newTeamId}")
-    @PreAuthorize("hasRole('Admin')")
-    public ResponseEntity<User> changeUserTeam(@PathVariable int userId,@PathVariable int oldTeamId, @PathVariable int newTeamId) {
-        User updatedUser = userService.changeUserTeam(userId,oldTeamId, newTeamId);
-        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-    }
-
     @GetMapping("/all")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
@@ -103,11 +96,17 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<User> getUserById(@PathVariable int id) {
         User user = userService.getUserById(id);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
-
+    @PutMapping("/photo/{id}")
+    public ApiResponse<User> uploadPhoto(@PathVariable("id") int id, @RequestParam("file") MultipartFile file) {
+        User user = userService.uploadUserPhoto(id, file);
+        return ApiResponse.<User>builder()
+                .result(user)
+                .code(200)
+                .build();
+    }
 }

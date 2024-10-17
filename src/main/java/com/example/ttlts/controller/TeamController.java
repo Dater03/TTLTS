@@ -59,6 +59,7 @@ public class TeamController {
         return new ResponseEntity<>(updatedTeam, HttpStatus.OK);
     }
 
+    // Chuyển phòng ban cho nhân viên
     @PutMapping("/change-team/{userId}/{oldTeamId}/{newTeamId}")
     @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<User> changeUserTeam(@PathVariable int userId,@PathVariable int oldTeamId, @PathVariable int newTeamId) {

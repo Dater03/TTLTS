@@ -3,7 +3,10 @@ package com.example.ttlts.service.Service;
 import com.example.ttlts.dto.request.ChangePasswordRequest;
 import com.example.ttlts.dto.request.RegisterRequest;
 import com.example.ttlts.dto.request.ResetPasswordRequest;
+import com.example.ttlts.dto.response.UserResponse;
 import com.example.ttlts.entity.*;
+import com.example.ttlts.exception.AppException;
+import com.example.ttlts.exception.ErrException;
 import com.example.ttlts.repository.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +17,16 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -71,22 +81,9 @@ public class UserService {
 
         return true;
     }
-//    public User register(User user) {
-//        user.setPassword(passwordEncoder.encode(user.getPassword()));
-//        user.setCreateTime(LocalDateTime.now());
-//        user.setUpdateTime(LocalDateTime.now());
-//
-//        User savedUser = userRepository.save(user);
-//
-//        if (savedUser.getEmail() != null && !savedUser.getEmail().isEmpty()) {
-//            String subject = "Welcome to our service!";
-//            String text = "Dear " + savedUser.getFullName() + ", your account has been created successfully.";
-//            emailService.sendEmail(savedUser.getEmail(), subject, text);
-//        }
-//        return savedUser;
-//    }
 
     // Đăng nhập và tạo JWT
+    // chuyen sang authService
     public String login(String username, String password) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -151,17 +148,6 @@ public class UserService {
 
 
     // Đổi mật khẩu
-//    public void changePassword(String username, String oldPassword, String newPassword) {
-//        User user = userRepository.findByUsername(username)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-//
-//        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-//            throw new BadCredentialsException("Invalid old password");
-//        }
-//
-//        user.setPassword(passwordEncoder.encode(newPassword));
-//        userRepository.save(user);
-//    }
     public boolean changePassword(ChangePasswordRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -189,21 +175,25 @@ public class UserService {
             throw new RuntimeException("New team must be different from the old team");
         }
 
-        user.setTeamId(newTeamId);
-        user.setUpdateTime(LocalDateTime.now());
+        if (user.getTeamId() == oldTeamId){
+            user.setTeamId(newTeamId);
+            user.setUpdateTime(LocalDateTime.now());
 
-        Team teamOld = teamRepository.findById(oldTeamId)
-                .orElseThrow(() -> new RuntimeException("Old team not found"));
-        teamOld.setNumberOfMember(teamOld.getNumberOfMember() - 1);
+            Team teamOld = teamRepository.findById(oldTeamId)
+                    .orElseThrow(() -> new RuntimeException("Old team not found"));
+            teamOld.setNumberOfMember(teamOld.getNumberOfMember() - 1);
 
-        Team teamNew = teamRepository.findById(newTeamId)
-                .orElseThrow(() -> new RuntimeException("New team not found"));
-        teamNew.setNumberOfMember(teamNew.getNumberOfMember() + 1);
+            Team teamNew = teamRepository.findById(newTeamId)
+                    .orElseThrow(() -> new RuntimeException("New team not found"));
+            teamNew.setNumberOfMember(teamNew.getNumberOfMember() + 1);
 
-        teamRepository.save(teamOld);
-        teamRepository.save(teamNew);
+            teamRepository.save(teamOld);
+            teamRepository.save(teamNew);
 
-        return userRepository.save(user);
+            return userRepository.save(user);
+        } else {
+            throw new RuntimeException("Old team id mismatch");
+        }
     }
 
     public List<User> getAllUsers() {
@@ -214,5 +204,36 @@ public class UserService {
         return userRepository.findById(id);
     }
 
-
+    private boolean isPhoto(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && contentType.startsWith("image/");
+    }
+    private String storeFile(MultipartFile file) {
+        if (!isPhoto(file) || file.getOriginalFilename() == null || file.getOriginalFilename().isEmpty()) {
+            throw new AppException(ErrException.NOT_FILE);
+        }
+        String filename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        String uniqueFilename = UUID.randomUUID().toString() +"_" + filename;
+        java.nio.file.Path uploadDir = Paths.get("upload");
+        if (!Files.exists(uploadDir)) {
+            try {
+                Files.createDirectories(uploadDir);
+            } catch (IOException e) {
+                throw new AppException((ErrException.DIRECTORY_CREATION_FAILD));
+            }
+        }
+        java.nio.file.Path destination = Paths.get(uploadDir.toString(), uniqueFilename);
+        try {
+            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new AppException((ErrException.FILE_STORAGE_FAILD));
+        }
+        return uniqueFilename;
+    }
+    public User uploadUserPhoto(int userId, MultipartFile file) {
+        User user = userRepository.findById(userId);
+        String filename = storeFile(file);
+        user.setAvatar(filename);
+        return userRepository.save(user);
+    }
 }
