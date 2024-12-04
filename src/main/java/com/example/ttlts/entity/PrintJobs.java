@@ -20,6 +20,7 @@ public class PrintJobs {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
     int designId;
+    @Enumerated(EnumType.STRING)
     PrintJobStatus printJobStatus;
 
     @OneToMany(mappedBy = "printjobs")
@@ -32,6 +33,8 @@ public class PrintJobs {
     Design design;
 }
 
-enum PrintJobStatus {
-
+ enum PrintJobStatus {
+    PENDING,
+    IN_PROGRESS,
+    COMPLETED
 }

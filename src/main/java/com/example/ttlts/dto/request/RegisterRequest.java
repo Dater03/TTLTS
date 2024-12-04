@@ -15,4 +15,5 @@ public class RegisterRequest {
     String email;
     String phoneNumber;
     int teamId;
+    String role;
 }

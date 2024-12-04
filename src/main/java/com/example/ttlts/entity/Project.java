@@ -48,20 +48,15 @@ public class Project {
     @JsonIgnore
     List<Design> design;
 
-//    @ManyToOne
-//    @JoinColumn(name = "customerId",insertable = false, updatable = false,nullable = false)
-//    @JsonBackReference
-//    Customer customer;
+    @ManyToOne
+    @JoinColumn(name = "customerId",insertable = false, updatable = false,nullable = false)
+            @JsonIgnore
+    Customer customer;
 
     @ManyToOne
     @JoinColumn(name = "employeeId",insertable = false, updatable = false,nullable = false)
-    @JsonBackReference
+            @JsonIgnore
     User user;
 
 }
 
-enum ProjectStatus {
-    DESIGNING,
-    PRINTING,
-    COMPLETED;
-}

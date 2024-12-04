@@ -1,5 +1,6 @@
 package com.example.ttlts.controller;
 
+import ch.qos.logback.core.model.Model;
 import com.example.ttlts.entity.Project;
 import com.example.ttlts.entity.User;
 import com.example.ttlts.service.Service.ProjectService;
@@ -24,6 +25,7 @@ public class ProjectController {
     UserService userService;
     ProjectService projectService;
 
+
     // Tạo Project (Nhân viên có quyền Employee trong phòng ban Sales)
     @PostMapping("/create")
     @PreAuthorize("hasRole('Employee')")
@@ -39,12 +41,29 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProjectById(@PathVariable int id) {
-        try {
-            Project project = projectService.getProjectById(id);
-            return new ResponseEntity<>(project, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<Project> getProjectById(@PathVariable int id) {
+        Project project = projectService.getProjectById(id);
+        return new ResponseEntity<>(project, HttpStatus.OK);
     }
+
+
+    @PutMapping("/{id}/confirm-printing")
+    public ResponseEntity<Void> confirmPrinting(@PathVariable int id, @RequestBody List<Integer> resourceIds) {
+        projectService.confirmPrinting(id, resourceIds);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/complete-printing")
+    public ResponseEntity<Void> completePrinting(@PathVariable int id) {
+        projectService.completePrinting(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Lấy danh sách các dự án đã hoàn thành in ấn
+    @GetMapping("/completed-printing")
+    public ResponseEntity<List<Project>> getCompletedPrintingProjects() {
+        List<Project> projects = projectService.getCompletedPrintingProjects();
+        return ResponseEntity.ok(projects);
+    }
+
 }

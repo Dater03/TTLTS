@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
@@ -47,6 +48,7 @@ public class AuthService {
                 .expirationTime(new Date(
                         Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli() // thoi han dung
                 ))
+                .jwtID(UUID.randomUUID().toString())
                 .claim("scope",buildScopeToRoles(user)) // get role
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject()); // xac dinh thong tin cua token
@@ -89,8 +91,5 @@ public class AuthService {
 
         return stringJoiner.toString(); // ví dụ: nếu có các vai trò "ADMIN", "USER", thì trả về chuỗi: "ADMIN USER"
     }
-
-
-
 }
 

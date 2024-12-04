@@ -11,4 +11,5 @@ import java.util.Optional;
 @Repository
 public interface PermissionsRepository extends JpaRepository<Permissions, Integer> {
     Optional<Permissions> findByUserIdAndRoleId(int userId, int roleId);
+    void deleteByUserId(int userId);
 }

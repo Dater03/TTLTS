@@ -1,7 +1,13 @@
 package com.example.ttlts.service.Service;
 
+import com.example.ttlts.entity.Permissions;
+import com.example.ttlts.entity.Role;
 import com.example.ttlts.entity.Team;
+import com.example.ttlts.entity.User;
+import com.example.ttlts.repository.PermissionsRepository;
+import com.example.ttlts.repository.RoleRepository;
 import com.example.ttlts.repository.TeamRepository;
+import com.example.ttlts.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -16,6 +22,9 @@ import java.util.List;
 @Service
 public class TeamService {
     TeamRepository teamRepository;
+    UserRepository userRepository;
+    RoleRepository roleRepository;
+    PermissionsRepository permissionsRepository;
 
     public Team createTeam(Team team) {
         team.setNumberOfMember(0);
@@ -40,6 +49,25 @@ public class TeamService {
 
     public List<Team> getAllTeams() {
         return teamRepository.findAll().stream().toList();
+    }
+
+    public Team setManager(int teamId, int userId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+        team.setManagerId(userId);
+
+        User user = userRepository.findById(userId);
+        if (user != null) {
+            Role leaderRole = roleRepository.findByRoleName("Leader")
+                    .orElseThrow(() -> new RuntimeException("Role 'Leader' not found"));
+
+            Permissions permissions = Permissions.builder()
+                    .userId(user.getId())
+                    .roleId(leaderRole.getId())
+                    .build();
+            permissionsRepository.save(permissions);
+        }
+        return teamRepository.save(team);
     }
 
     // Thay đổi trưởng phòng

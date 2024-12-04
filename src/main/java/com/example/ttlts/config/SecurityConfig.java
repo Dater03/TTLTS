@@ -15,6 +15,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -31,11 +33,24 @@ public class SecurityConfig {
     }
 
     @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**").allowedOrigins("http://localhost:8080");
+            }
+        };
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(request -> request
                         .requestMatchers("/auth/**").permitAll() // Mở cho mọi người
-                        .requestMatchers("/team/**").hasRole("Admin") // Tất cả API team chỉ cho Admin
-                        .requestMatchers("/project/**").hasRole("Employee") // Chỉ cho Employee
+                        .requestMatchers("/resource/**").permitAll()
+                        .requestMatchers("/team/**").permitAll() // Tất cả API team chỉ cho Admin
+                        .requestMatchers("/design/**").permitAll() // Chỉ cho Designer.
+                        .requestMatchers("/delivery/**").permitAll() // Chỉ cho nhân viên giao hàng
+                        .requestMatchers("/project/**").permitAll() // Chỉ cho Leader và Designer
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement

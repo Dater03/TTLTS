@@ -28,3 +28,5 @@ public class KeyPerformanceIndicators {
     @JsonBackReference
     User user;
 }
+enum Period {
+}

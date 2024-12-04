@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completed Printing Projects</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Projects Ready for Delivery</h2>
+    <table class="table table-bordered mt-4">
+        <thead>
+        <tr>
+            <th>Project ID</th>
+            <th>Project Name</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="projectList">
+        <!-- Danh sách dự án sẽ được hiển thị ở đây -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Fetch completed printing projects and display them
+    async function fetchCompletedPrintingProjects() {
+        try {
+            const response = await fetch(`http://localhost:8080/project/completed-printing`);
+            if (!response.ok) throw new Error("Failed to fetch projects");
+
+            const projects = await response.json();
+            const projectList = document.getElementById('projectList');
+            projectList.innerHTML = ""; // Clear existing content
+
+            projects.forEach(project => {
+                const projectRow = document.createElement('tr');
+                projectRow.innerHTML = `
+                    <td>${project.id}</td>
+                    <td>${project.projectName}</td>
+                    <td>
+                        <button class="btn btn-success">
+                            Giao hàng
+                        </button>
+                    </td>`;
+                projectList.appendChild(projectRow);
+            });
+        } catch (error) {
+            console.error('Error fetching completed printing projects:', error);
+        }
+    }
+
+    // Handle delivery button click
+    // async function handleDelivery(projectId) {
+    //     try {
+    //         const response = await fetch(`http://localhost:8080/project/${projectId}/complete-delivery`, {
+    //             method: 'PUT'
+    //         });
+    //         if (!response.ok) throw new Error("Failed to complete delivery");
+    //
+    //         alert('Giao hàng thành công!');
+    //         fetchCompletedPrintingProjects(); // Refresh the list
+    //     } catch (error) {
+    //         console.error('Error completing delivery:', error);
+    //         alert('Lỗi khi giao hàng');
+    //     }
+    // }
+
+    // Load completed printing projects on page load
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchCompletedPrintingProjects();
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

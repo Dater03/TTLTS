@@ -97,8 +97,6 @@
             <artifactId>jackson-core</artifactId>
         </dependency>
 
-
-
         <!--email-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -129,6 +127,19 @@
             <artifactId>mapstruct</artifactId>
             <version>${mapstruct.version}</version>
         </dependency>
+
+        <!-- redis -->
+<!--        <dependency>-->
+<!--            <groupId>redis.clients</groupId>-->
+<!--            <artifactId>jedits</artifactId>-->
+<!--            <version>4.4.1</version>-->
+<!--            <type>jar</type>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

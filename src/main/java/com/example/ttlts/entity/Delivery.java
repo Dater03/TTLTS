@@ -1,6 +1,7 @@
 package com.example.ttlts.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,24 +26,22 @@ public class Delivery {
     String deliveryAddress;
     LocalDateTime estimateDeliveryTime;
     LocalDateTime actualDeliveryTime;
+    @Enumerated(EnumType.STRING)
     DeliveryStatus deliveryStatus;
 
     @ManyToOne
     @JoinColumn(name = "shippingMethodId",insertable = false, updatable = false,nullable = false)
-    @JsonBackReference
+    @JsonIgnore
     ShippingMethod shippingmethod;
 
     @ManyToOne
     @JoinColumn(name = "projectId",insertable = false, updatable = false,nullable = false)
-    @JsonBackReference
+    @JsonIgnore
     Project project;
 
     @ManyToOne
-    @JoinColumn(name = "customerId",insertable = false, updatable = false,nullable = false)
+    @JoinColumn(name = "customerId",insertable = false, updatable = false)
     @JsonBackReference
     Customer customer;
 }
 
-enum DeliveryStatus {
-
-}

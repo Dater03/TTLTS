@@ -23,18 +23,19 @@ public class Customer {
     String fullName;
     String phoneNumber;
     String address;
+    String email;
 
     @OneToMany(mappedBy = "customer")
     @JsonManagedReference
     List<CustomerFeedback> customerfeedback;
 
     @OneToMany(mappedBy = "customer")
-    @JsonManagedReference
+    @JsonIgnore
     List<Bill> bill;
 
-//    @OneToMany(mappedBy = "customer")
-//    @JsonManagedReference
-//    List<Project> project;
+    @OneToMany(mappedBy = "customer")
+    @JsonIgnore
+    List<Project> project;
 
     @OneToMany(mappedBy = "customer")
     @JsonManagedReference

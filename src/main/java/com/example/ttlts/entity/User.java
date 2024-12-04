@@ -87,5 +87,6 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "teamId",insertable=false, updatable=false, nullable = false)
     @JsonBackReference
+            @JsonIgnore
     Team team;
 }

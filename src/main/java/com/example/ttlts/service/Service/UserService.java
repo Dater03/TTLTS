@@ -8,6 +8,7 @@ import com.example.ttlts.entity.*;
 import com.example.ttlts.exception.AppException;
 import com.example.ttlts.exception.ErrException;
 import com.example.ttlts.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +27,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -43,6 +45,15 @@ public class UserService {
     TeamRepository teamRepository;
     PermissionsRepository permissionsRepository;
     RoleRepository roleRepository;
+
+    private static final Map<Integer, String> TEAM_ROLE_MAPPING = Map.of(
+            1, "Admin",
+            2, "Employee",
+            3, "Designer",
+            4, "Deliver",
+            5, "Leader",
+            6, "Manager"
+    );
 
     // Đăng ký người dùng mới
     public boolean register(RegisterRequest registerRequest) {
@@ -66,12 +77,12 @@ public class UserService {
         team.setNumberOfMember(team.getNumberOfMember() + 1);
         teamRepository.save(team);
 
-        Role employeeRole = roleRepository.findByRoleName("Employee")
-                .orElseThrow(() -> new RuntimeException("Role 'Employee' not found"));
+        Role chosenRole = roleRepository.findByRoleName(registerRequest.getRole())
+                .orElseThrow(() -> new RuntimeException("Role '" + registerRequest.getRole() + "' not found"));
 
         Permissions permissions = Permissions.builder()
                 .userId(savedUser.getId())
-                .roleId(employeeRole.getId())
+                .roleId(chosenRole.getId())
                 .build();
         permissionsRepository.save(permissions);
 
@@ -168,6 +179,7 @@ public class UserService {
     }
 
     // Chuyển phòng ban cho nhân viên
+    @Transactional
     public User changeUserTeam(int userId, int oldTeamId, int newTeamId) {
         User user = userRepository.findById(userId);
 
@@ -186,6 +198,24 @@ public class UserService {
             Team teamNew = teamRepository.findById(newTeamId)
                     .orElseThrow(() -> new RuntimeException("New team not found"));
             teamNew.setNumberOfMember(teamNew.getNumberOfMember() + 1);
+
+            // Lấy role dựa trên teamId từ ánh xạ
+            String newRoleName = TEAM_ROLE_MAPPING.get(newTeamId);
+            if (newRoleName != null) {
+                Role newRole = roleRepository.findByRoleName(newRoleName)
+                        .orElseThrow(() -> new RuntimeException("Role '" + newRoleName + "' not found"));
+
+                // Xóa role cũ của nhân viên và gán role mới
+                permissionsRepository.deleteByUserId(user.getId());
+                Permissions newPermissions = Permissions.builder()
+                        .userId(user.getId())
+                        .roleId(newRole.getId())
+                        .build();
+                permissionsRepository.save(newPermissions);
+            } else {
+                throw new RuntimeException("No role mapping found for the new team");
+            }
+
 
             teamRepository.save(teamOld);
             teamRepository.save(teamNew);

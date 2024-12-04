@@ -52,6 +52,14 @@ public class TeamController {
     }
 
     // Thay đổi trưởng phòng
+    @PutMapping("/set-manager/{teamId}/{userId}")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<Team> setManager(@PathVariable int teamId, @PathVariable int userId) {
+        Team updatedTeam = teamService.setManager(teamId, userId);
+        return new ResponseEntity<>(updatedTeam, HttpStatus.OK);
+    }
+
+    // Thay đổi trưởng phòng
     @PutMapping("/change-manager/{teamId}/{newManagerId}")
     @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<Team> changeManager(@PathVariable int teamId, @PathVariable int newManagerId) {

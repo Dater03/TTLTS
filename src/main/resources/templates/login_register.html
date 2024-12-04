@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Register</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .container {
+            margin-top: 50px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-custom {
+            background-color: #333;
+            color: white;
+        }
+
+        .btn-custom:hover {
+            background-color: #555;
+        }
+
+        .forget-pwd {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .forget-pwd:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+<div class="header">
+    <h1>Print Management</h1>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Login Content Start -->
+        <div class="col-lg-6">
+            <h2 class="text-center mb-4">Sign In</h2>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Username" id="loginUsername" required />
+                </div>
+                <div class="mb-3">
+                    <input type="password" class="form-control" placeholder="Enter your Password" id="loginPassword" required />
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe" />
+                    <label class="form-check-label" for="rememberMe">Remember Me</label>
+                </div>
+                <a href="forgot-password.html" class="forget-pwd">Forget Password?</a>
+                <a href="reset-password.html" class="change-pwd">Change Password?</a>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-custom w-100">Login</button>
+                </div>
+            </form>
+        </div>
+        <!-- Login Content End -->
+
+        <!-- Register Content Start -->
+        <div class="col-lg-6">
+            <h2 class="text-center mb-4">Signup Form</h2>
+            <form id="registerForm">
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Full Name" id="registerName" required />
+                </div>
+                <div class="mb-3">
+                    <input type="email" class="form-control" placeholder="Enter your Email" id="registerEmail" required />
+                </div>
+                <div class="mb-3">
+                    <input type="password" class="form-control" placeholder="Enter your Password" id="registerPassword" required />
+                </div>
+                <div class="mb-3">
+                    <input type="password" class="form-control" placeholder="Repeat your Password" id="registerConfirmPassword" required />
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-custom w-100">Register</button>
+                </div>
+            </form>
+        </div>
+        <!-- Register Content End -->
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const username = document.getElementById('loginUsername').value; // lấy username
+        const password = document.getElementById('loginPassword').value;
+
+        fetch('http://localhost:8080/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username,  // truyền username thay vì email
+                password: password
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200) {
+                    alert("Login successful");
+                    localStorage.setItem('token', data.result.token); // lưu token
+                    window.location.href = "dashboard.html"; // chuyển hướng sau khi đăng nhập thành công
+                } else {
+                    alert("Login failed");
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    });
+
+
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const name = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        // const confirmPassword = document.getElementById('registerConfirmPassword').value;
+        //
+        // if (password !== confirmPassword) {
+        //     alert("Passwords do not match");
+        //     return;
+        // }
+
+        fetch('http://localhost:8080/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: email,
+                password: password,
+                fullName: name
+            })
+        })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    });4
+</script>
+
+</html>
